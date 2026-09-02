@@ -186,10 +186,91 @@
 
     main {
       width: min(1180px, calc(100% - 32px));
-      margin: -34px auto 72px;
+      margin: -56px auto 72px;
       position: relative;
       z-index: 2;
     }
+
+    .mode-switcher {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 24px;
+      padding: 8px;
+      border: 1px solid rgba(32, 41, 95, 0.08);
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .mode-tab {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      min-width: 0;
+      min-height: 82px;
+      padding: 14px 20px;
+      border: 0;
+      border-radius: 18px;
+      background: transparent;
+      color: #5f6882;
+      cursor: pointer;
+      text-align: left;
+      transition: color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+    }
+
+    .mode-tab:hover { background: #f4f7fb; transform: translateY(-1px); }
+    .mode-tab:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
+
+    .mode-tab.is-active {
+      background: var(--navy);
+      color: white;
+      box-shadow: 0 0 0 3px var(--yellow), 0 10px 24px rgba(32, 41, 95, 0.2);
+    }
+
+    .mode-tab.is-active:hover { background: var(--navy-2); }
+
+    .mode-index {
+      display: grid;
+      place-items: center;
+      flex: 0 0 38px;
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: #edf1f7;
+      color: var(--navy);
+      font-size: 13px;
+      font-weight: 950;
+    }
+
+    .mode-tab.is-active .mode-index { background: var(--yellow); }
+
+    .mode-copy { min-width: 0; }
+    .mode-copy strong {
+      display: block;
+      overflow: hidden;
+      color: inherit;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: -0.035em;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .mode-copy small {
+      display: block;
+      margin-top: 1px;
+      overflow: hidden;
+      color: #9098ad;
+      font-size: 13px;
+      font-weight: 700;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .mode-tab.is-active .mode-copy small { color: #c7cee4; }
 
     .panel {
       overflow: hidden;
@@ -456,7 +537,12 @@
       .cloud.two { left: -52px; bottom: 32px; }
       .pencil { top: 25px; right: -70px; transform: rotate(50deg) scale(0.72); }
       .magnifier { right: 7%; bottom: 30px; transform: rotate(-28deg) scale(0.72); }
-      main { width: calc(100% - 20px); margin-top: -28px; }
+      main { width: calc(100% - 20px); margin-top: -38px; }
+      .mode-switcher { gap: 6px; margin-bottom: 16px; padding: 6px; border-radius: 19px; }
+      .mode-tab { min-height: 78px; gap: 8px; padding: 10px 8px; border-radius: 14px; }
+      .mode-index { flex-basis: 31px; width: 31px; height: 31px; border-radius: 10px; font-size: 11px; }
+      .mode-copy strong { font-size: 14px; }
+      .mode-copy small { font-size: 11px; }
       .panel { border-radius: 20px; }
       .intro-strip { align-items: flex-start; padding: 19px; }
       .intro-strip strong { font-size: 16px; }
@@ -477,6 +563,11 @@
       .result-bottom-actions .btn { width: 100%; }
     }
 
+    @media (max-width: 420px) {
+      .mode-tab { min-height: 62px; }
+      .mode-copy small { display: none; }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
     }
@@ -495,7 +586,24 @@
   </header>
 
   <main>
-    <section id="formView" class="panel" aria-labelledby="formTitle">
+    <nav class="mode-switcher" role="tablist" aria-label="프롬프트 생성 방식 선택">
+      <button type="button" class="mode-tab is-active" id="createModeTab" role="tab" aria-selected="true" aria-controls="formView" tabindex="0" data-mode="create">
+        <span class="mode-index" aria-hidden="true">01</span>
+        <span class="mode-copy">
+          <strong>새 웹앱 만들기</strong>
+          <small>아이디어로 처음부터 제작</small>
+        </span>
+      </button>
+      <button type="button" class="mode-tab" id="editModeTab" role="tab" aria-selected="false" aria-controls="editFormView" tabindex="-1" data-mode="edit">
+        <span class="mode-index" aria-hidden="true">02</span>
+        <span class="mode-copy">
+          <strong>기존 웹앱 수정하기</strong>
+          <small>바꿀 내용과 검증 기준 정리</small>
+        </span>
+      </button>
+    </nav>
+
+    <section id="formView" class="panel" role="tabpanel" aria-labelledby="createModeTab formTitle">
       <div class="intro-strip">
         <div>
           <strong id="formTitle">신청서 문장은 그대로 복사해도 괜찮아요.</strong>
@@ -598,7 +706,7 @@
       </form>
     </section>
 
-    <section id="resultView" class="panel result-panel" aria-labelledby="resultTitle" hidden>
+    <section id="resultView" class="panel result-panel" role="tabpanel" aria-labelledby="createModeTab resultTitle" hidden>
       <div class="result-top">
         <div>
           <h2 id="resultTitle">전체 프롬프트가 완성됐어요.</h2>
@@ -616,6 +724,138 @@
         <pre id="promptOutput" class="prompt-output" tabindex="0" aria-label="완성된 전체 프롬프트"></pre>
         <div class="result-bottom-actions">
           <button type="button" class="btn btn-secondary" id="editButtonBottom">← 입력 내용 수정</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="editFormView" class="panel" role="tabpanel" aria-labelledby="editModeTab editFormTitle" hidden>
+      <div class="intro-strip">
+        <div>
+          <strong id="editFormTitle">바꿀 내용과 건드리지 않을 내용을 함께 적어 주세요.</strong>
+          <p>각 칸에는 짧은 문장이나 핵심 표현만 적어도 됩니다. 비워 둔 칸은 밑줄로 남아 나중에 직접 채울 수 있어요.</p>
+        </div>
+        <div class="progress-pill" aria-live="polite"><span id="editFilledCount">0</span> / <span id="editTotalCount">11</span> 작성</div>
+      </div>
+
+      <form id="editPromptForm" novalidate>
+        <section class="section" aria-labelledby="editSectionOneTitle">
+          <div class="section-heading">
+            <span class="section-number" aria-hidden="true">1</span>
+            <div>
+              <h2 id="editSectionOneTitle">요구와 변화 정리하기</h2>
+              <p class="section-description">지금의 문제와 사용자가 경험해야 할 변화를 한 쌍으로 적어 보세요.</p>
+            </div>
+          </div>
+
+          <div class="field-grid">
+            <div class="field">
+              <label class="question" for="editProblem">현재 어떤 문제가 있나요?</label>
+              <textarea id="editProblem" name="editProblem" rows="2" placeholder="예: 모바일 화면에서 저장 버튼이 잘리는"></textarea>
+            </div>
+
+            <div class="field">
+              <label class="question" for="editTarget">어느 부분을 바꾸고 싶나요?</label>
+              <textarea id="editTarget" name="editTarget" rows="2" placeholder="예: 저장 버튼 영역의 너비와 배치"></textarea>
+            </div>
+
+            <div class="field">
+              <label class="question" for="editAction">사용자가 무엇을 하면 변화가 시작되나요?</label>
+              <textarea id="editAction" name="editAction" rows="2" placeholder="예: 저장 버튼을 클릭"></textarea>
+            </div>
+
+            <div class="field">
+              <label class="question" for="editOutcome">화면에서 어떤 결과가 나타나야 하나요?</label>
+              <textarea id="editOutcome" name="editOutcome" rows="2" placeholder="예: 저장 완료 안내가 표시"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="editSectionTwoTitle">
+          <div class="section-heading">
+            <span class="section-number" aria-hidden="true">2</span>
+            <div>
+              <h2 id="editSectionTwoTitle">유지할 조건 정하기</h2>
+              <p class="section-description">새로운 수정을 하더라도 그대로 남아야 할 기능과 디자인을 알려 주세요.</p>
+            </div>
+          </div>
+
+          <div class="field-grid">
+            <div class="field">
+              <label class="question" for="keepFeature">어떤 기능을 반드시 유지해야 하나요?</label>
+              <textarea id="keepFeature" name="keepFeature" rows="2" placeholder="예: 기존 입력값 저장"></textarea>
+            </div>
+
+            <div class="field">
+              <label class="question" for="lockedArea">어떤 부분은 변경하지 않아야 하나요?</label>
+              <textarea id="lockedArea" name="lockedArea" rows="2" placeholder="예: 브랜드 색상과 상단 메뉴 구성"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="editSectionThreeTitle">
+          <div class="section-heading">
+            <span class="section-number" aria-hidden="true">3</span>
+            <div>
+              <h2 id="editSectionThreeTitle">검증 기준 작성하기</h2>
+              <p class="section-description">어떤 행동을 했을 때 무엇이 나타나야 성공인지 구체적으로 적어 보세요.</p>
+            </div>
+          </div>
+
+          <div class="field-grid">
+            <div class="field">
+              <label class="question" for="checkActionOne">첫 번째로 어떤 행동을 시험할까요?</label>
+              <textarea id="checkActionOne" name="checkActionOne" rows="2" placeholder="예: 내용을 입력하고 저장 버튼을 클릭"></textarea>
+            </div>
+
+            <div class="field">
+              <label class="question" for="checkResultOne">첫 번째 행동 뒤 어떤 결과가 나와야 하나요?</label>
+              <textarea id="checkResultOne" name="checkResultOne" rows="2" placeholder="예: 저장 완료 안내가 표시"></textarea>
+            </div>
+
+            <div class="field">
+              <label class="question" for="checkActionTwo">두 번째로 어떤 행동을 시험할까요?</label>
+              <textarea id="checkActionTwo" name="checkActionTwo" rows="2" placeholder="예: 페이지를 새로고침"></textarea>
+            </div>
+
+            <div class="field">
+              <label class="question" for="checkResultTwo">두 번째 행동 뒤 어떤 결과가 나와야 하나요?</label>
+              <textarea id="checkResultTwo" name="checkResultTwo" rows="2" placeholder="예: 저장한 내용이 그대로 유지"></textarea>
+            </div>
+
+            <div class="field">
+              <label class="question" for="legacyFeature">수정 후에도 정상 작동해야 할 기존 기능은 무엇인가요?</label>
+              <textarea id="legacyFeature" name="legacyFeature" rows="2" placeholder="예: 전체 입력값 초기화"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <div class="form-footer">
+          <div class="button-row">
+            <button type="button" class="btn btn-secondary" id="editResetButton">전체 지우기</button>
+            <button type="submit" class="btn btn-primary">수정 프롬프트 만들기 →</button>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <section id="editResultView" class="panel result-panel" role="tabpanel" aria-labelledby="editModeTab editResultTitle" hidden>
+      <div class="result-top">
+        <div>
+          <h2 id="editResultTitle">수정 프롬프트가 완성됐어요.</h2>
+          <p>아래 내용을 복사해 수정할 웹앱이 열린 Codex에 붙여넣으세요.</p>
+        </div>
+        <div class="result-actions">
+          <button type="button" class="btn btn-secondary" id="editPromptButton">← 입력 내용 수정</button>
+          <button type="button" class="btn btn-copy" id="editCopyButton">수정 프롬프트 복사하기</button>
+        </div>
+      </div>
+      <div class="output-wrap">
+        <div class="output-meta">
+          <span id="editCharacterCount">0자</span>
+        </div>
+        <pre id="editPromptOutput" class="prompt-output" tabindex="0" aria-label="완성된 수정 프롬프트"></pre>
+        <div class="result-bottom-actions">
+          <button type="button" class="btn btn-secondary" id="editPromptButtonBottom">← 입력 내용 수정</button>
         </div>
       </div>
     </section>
@@ -637,13 +877,54 @@
       const characterCount = document.getElementById("characterCount");
       const copyToast = document.getElementById("copyToast");
       const fields = Array.from(form.querySelectorAll("input, textarea"));
+      const editForm = document.getElementById("editPromptForm");
+      const editFormView = document.getElementById("editFormView");
+      const editResultView = document.getElementById("editResultView");
+      const editOutput = document.getElementById("editPromptOutput");
+      const editFilledCount = document.getElementById("editFilledCount");
+      const editTotalCount = document.getElementById("editTotalCount");
+      const editCharacterCount = document.getElementById("editCharacterCount");
+      const editFields = Array.from(editForm.querySelectorAll("input, textarea"));
+      const modeTabs = Array.from(document.querySelectorAll(".mode-tab"));
       let toastTimer;
 
       totalCount.textContent = String(fields.length);
+      editTotalCount.textContent = String(editFields.length);
 
       function updateProgress() {
         const count = fields.filter((field) => field.value.trim().length > 0).length;
         filledCount.textContent = String(count);
+      }
+
+      function updateEditProgress() {
+        const count = editFields.filter((field) => field.value.trim().length > 0).length;
+        editFilledCount.textContent = String(count);
+      }
+
+      function selectMode(mode, updateUrl = true) {
+        const isEdit = mode === "edit";
+        formView.hidden = isEdit;
+        resultView.hidden = true;
+        editFormView.hidden = !isEdit;
+        editResultView.hidden = true;
+
+        modeTabs.forEach((tab) => {
+          const active = tab.dataset.mode === mode;
+          tab.classList.toggle("is-active", active);
+          tab.setAttribute("aria-selected", String(active));
+          tab.setAttribute("aria-controls", tab.dataset.mode === "edit" ? "editFormView" : "formView");
+          tab.tabIndex = active ? 0 : -1;
+        });
+
+        document.title = isEdit
+          ? "기존 웹앱 수정하기 | AI시대 청소년 창업가정신 부트캠프"
+          : "AI시대 청소년 창업가정신 부트캠프 바이브코딩 프로토타이핑 도구";
+
+        if (updateUrl) {
+          const url = new URL(window.location.href);
+          url.hash = isEdit ? "edit" : "create";
+          window.history.replaceState(null, "", url);
+        }
       }
 
       function getValue(id, fallback) {
@@ -666,6 +947,52 @@
           experience: getValue("experience", "생략"),
           coreFeature: getValue("coreFeature", "생략")
         };
+      }
+
+      const editBlank = "__________________";
+
+      function getEditValue(id) {
+        const value = document.getElementById(id).value.trim();
+        return value || editBlank;
+      }
+
+      function attachEditEnding(value, ending) {
+        return value === editBlank ? `${value} ${ending}` : `${value}${ending}`;
+      }
+
+      function collectEditValues() {
+        return {
+          problem: getEditValue("editProblem"),
+          target: getEditValue("editTarget"),
+          action: getEditValue("editAction"),
+          outcome: getEditValue("editOutcome"),
+          keepFeature: getEditValue("keepFeature"),
+          lockedArea: getEditValue("lockedArea"),
+          checkActionOne: getEditValue("checkActionOne"),
+          checkResultOne: getEditValue("checkResultOne"),
+          checkActionTwo: getEditValue("checkActionTwo"),
+          checkResultTwo: getEditValue("checkResultTwo"),
+          legacyFeature: getEditValue("legacyFeature")
+        };
+      }
+
+      function buildEditPrompt(v) {
+        return `[요구]
+현재 ${v.problem} 문제가 있어서
+${v.target} 부분을 바꾸고 싶다.
+
+[변화]
+사용자가 ${attachEditEnding(v.action, "하면")}
+화면에서 ${attachEditEnding(v.outcome, "되게")} 한다.
+
+[조건]
+${v.keepFeature} 기능은 유지하고,
+${v.lockedArea} 부분은 변경하지 않는다.
+
+[검증]
+1. ${attachEditEnding(v.checkActionOne, "하면")} ${attachEditEnding(v.checkResultOne, "된다")}.
+2. ${attachEditEnding(v.checkActionTwo, "하면")} ${attachEditEnding(v.checkResultTwo, "된다")}.
+3. 기존 ${v.legacyFeature} 기능도 정상 작동한다.`;
       }
 
       function buildPrompt(v) {
@@ -853,8 +1180,8 @@ ${v.coreFeature}
         toastTimer = window.setTimeout(() => copyToast.classList.remove("show"), 2600);
       }
 
-      async function copyText() {
-        const text = output.textContent;
+      async function copyFrom(source, button, idleLabel, successMessage) {
+        const text = source.textContent;
         let copied = false;
 
         if (navigator.clipboard && window.isSecureContext) {
@@ -884,19 +1211,37 @@ ${v.coreFeature}
         }
 
         if (copied) {
-          showToast("전체 프롬프트를 복사했습니다. Codex에 붙여넣어 주세요.");
-          document.getElementById("copyButton").textContent = "복사 완료 ✓";
+          showToast(successMessage);
+          button.textContent = "복사 완료 ✓";
           window.setTimeout(() => {
-            document.getElementById("copyButton").textContent = "전체 프롬프트 복사하기";
+            button.textContent = idleLabel;
           }, 2200);
         } else {
           const range = document.createRange();
-          range.selectNodeContents(output);
+          range.selectNodeContents(source);
           const selection = window.getSelection();
           selection.removeAllRanges();
           selection.addRange(range);
           showToast("자동 복사가 제한됐어요. 선택된 내용을 Ctrl+C로 복사해 주세요.");
         }
+      }
+
+      function copyText() {
+        return copyFrom(
+          output,
+          document.getElementById("copyButton"),
+          "전체 프롬프트 복사하기",
+          "전체 프롬프트를 복사했습니다. 붙여넣어 사용해 주세요."
+        );
+      }
+
+      function copyEditText() {
+        return copyFrom(
+          editOutput,
+          document.getElementById("editCopyButton"),
+          "수정 프롬프트 복사하기",
+          "수정 프롬프트를 복사했습니다. 붙여넣어 사용해 주세요."
+        );
       }
 
       form.addEventListener("submit", (event) => {
@@ -906,23 +1251,50 @@ ${v.coreFeature}
         characterCount.textContent = `${prompt.length.toLocaleString("ko-KR")}자`;
         formView.hidden = true;
         resultView.hidden = false;
+        document.getElementById("createModeTab").setAttribute("aria-controls", "resultView");
         document.title = "완성된 프롬프트 | AI시대 청소년 창업가정신 부트캠프";
         window.scrollTo({ top: document.querySelector("main").offsetTop - 14, behavior: "smooth" });
         window.setTimeout(() => document.getElementById("copyButton").focus(), 350);
       });
 
+      editForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const prompt = buildEditPrompt(collectEditValues());
+        editOutput.textContent = prompt;
+        editCharacterCount.textContent = `${prompt.length.toLocaleString("ko-KR")}자`;
+        editFormView.hidden = true;
+        editResultView.hidden = false;
+        document.getElementById("editModeTab").setAttribute("aria-controls", "editResultView");
+        document.title = "완성된 수정 프롬프트 | AI시대 청소년 창업가정신 부트캠프";
+        window.scrollTo({ top: document.querySelector("main").offsetTop - 14, behavior: "smooth" });
+        window.setTimeout(() => document.getElementById("editCopyButton").focus(), 350);
+      });
+
       function showInputForm() {
         resultView.hidden = true;
         formView.hidden = false;
+        document.getElementById("createModeTab").setAttribute("aria-controls", "formView");
         document.title = "AI시대 청소년 창업가정신 부트캠프 바이브코딩 프로토타이핑 도구";
         window.scrollTo({ top: document.querySelector("main").offsetTop - 14, behavior: "smooth" });
         window.setTimeout(() => fields[0].focus(), 350);
       }
 
+      function showEditInputForm() {
+        editResultView.hidden = true;
+        editFormView.hidden = false;
+        document.getElementById("editModeTab").setAttribute("aria-controls", "editFormView");
+        document.title = "기존 웹앱 수정하기 | AI시대 청소년 창업가정신 부트캠프";
+        window.scrollTo({ top: document.querySelector("main").offsetTop - 14, behavior: "smooth" });
+        window.setTimeout(() => editFields[0].focus(), 350);
+      }
+
       document.getElementById("editButton").addEventListener("click", showInputForm);
       document.getElementById("editButtonBottom").addEventListener("click", showInputForm);
+      document.getElementById("editPromptButton").addEventListener("click", showEditInputForm);
+      document.getElementById("editPromptButtonBottom").addEventListener("click", showEditInputForm);
 
       document.getElementById("copyButton").addEventListener("click", copyText);
+      document.getElementById("editCopyButton").addEventListener("click", copyEditText);
 
       document.getElementById("resetButton").addEventListener("click", () => {
         const hasInput = fields.some((field) => field.value.trim());
@@ -936,6 +1308,18 @@ ${v.coreFeature}
         }
       });
 
+      document.getElementById("editResetButton").addEventListener("click", () => {
+        const hasInput = editFields.some((field) => field.value.trim());
+        if (!hasInput || window.confirm("작성한 내용을 모두 지울까요?")) {
+          editForm.reset();
+          editFields.forEach((field) => {
+            if (field.tagName === "TEXTAREA") field.style.height = "";
+          });
+          updateEditProgress();
+          editFields[0].focus();
+        }
+      });
+
       fields.forEach((field) => {
         field.addEventListener("input", () => {
           updateProgress();
@@ -946,7 +1330,43 @@ ${v.coreFeature}
         });
       });
 
+      editFields.forEach((field) => {
+        field.addEventListener("input", () => {
+          updateEditProgress();
+          if (field.tagName === "TEXTAREA") {
+            field.style.height = "auto";
+            field.style.height = `${Math.min(field.scrollHeight, 260)}px`;
+          }
+        });
+      });
+
+      modeTabs.forEach((tab, index) => {
+        tab.addEventListener("click", () => {
+          selectMode(tab.dataset.mode);
+          window.scrollTo({ top: document.querySelector("main").offsetTop - 14, behavior: "smooth" });
+        });
+
+        tab.addEventListener("keydown", (event) => {
+          if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+          event.preventDefault();
+          let nextIndex = index;
+          if (event.key === "ArrowLeft") nextIndex = (index - 1 + modeTabs.length) % modeTabs.length;
+          if (event.key === "ArrowRight") nextIndex = (index + 1) % modeTabs.length;
+          if (event.key === "Home") nextIndex = 0;
+          if (event.key === "End") nextIndex = modeTabs.length - 1;
+          const nextTab = modeTabs[nextIndex];
+          selectMode(nextTab.dataset.mode);
+          nextTab.focus();
+        });
+      });
+
+      window.addEventListener("hashchange", () => {
+        selectMode(window.location.hash === "#edit" ? "edit" : "create", false);
+      });
+
       updateProgress();
+      updateEditProgress();
+      selectMode(window.location.hash === "#edit" ? "edit" : "create", false);
     })();
   </script>
 </body>
