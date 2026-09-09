@@ -458,7 +458,7 @@
     .gate-form input { min-height: 54px; }
     .gate-form .btn { width: 100%; margin-top: 16px; }
     .gate-error { margin: 10px 0 0; color: #aa3040; font-size: 14px; }
-    #chatbotPromptOutput { min-height: 0; }
+    #chatbotPromptOutput, #chatbotApiPromptOutput { min-height: 0; }
     .chatbot-toolbar { display: flex; align-items: center; gap: 20px; padding: 22px 34px; border-bottom: 1px solid var(--line); }
     .chatbot-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; flex: 1; max-width: 540px; padding: 6px; border-radius: 16px; background: #edf2f8; }
     .chatbot-step { display: flex; align-items: center; justify-content: center; gap: 9px; min-height: 48px; padding: 10px 12px; border: 0; border-radius: 11px; color: var(--muted); background: transparent; font: inherit; font-weight: 800; cursor: pointer; word-break: keep-all; }
@@ -466,9 +466,6 @@
     .chatbot-step-number { display: grid; place-items: center; flex: 0 0 24px; height: 24px; border-radius: 8px; background: #e1e7f0; font-size: 12px; }
     .chatbot-step[aria-selected="true"] .chatbot-step-number { background: var(--yellow); }
     .chatbot-toolbar > .btn { margin-left: auto; }
-    .chatbot-api-notice { padding: 52px 34px; text-align: center; }
-    .chatbot-api-notice h2 { margin: 0; color: var(--navy); font-size: 25px; }
-    .chatbot-api-notice p { margin: 12px 0 0; color: var(--muted); }
 
     .result-top {
       display: flex;
@@ -586,8 +583,6 @@
       .chatbot-tabs { flex-basis: 100%; }
       .chatbot-step { padding: 10px 6px; gap: 6px; font-size: 14px; }
       .chatbot-toolbar > .btn { width: auto; min-height: 42px; }
-      .chatbot-api-notice { padding: 36px 22px; }
-      .chatbot-api-notice h2 { font-size: 22px; }
       .panel { border-radius: 20px; }
       .intro-strip { align-items: flex-start; padding: 19px; }
       .intro-strip strong { font-size: 16px; }
@@ -603,7 +598,7 @@
       .result-top, .output-wrap { padding-left: 18px; padding-right: 18px; }
       .result-top h2 { font-size: 25px; }
       .result-actions { display: grid; width: 100%; grid-template-columns: 0.8fr 1.2fr; }
-      #chatbotBuildPanel .result-actions { grid-template-columns: 1fr; }
+      #chatbotContent .result-actions { grid-template-columns: 1fr; }
       .prompt-output { min-height: 62vh; padding: 17px; font-size: 13px; }
       .output-meta { flex-direction: column; gap: 2px; }
       .result-bottom-actions .btn { width: 100%; }
@@ -977,9 +972,23 @@
           </div>
         </div>
         </section>
-        <section id="chatbotApiPanel" class="chatbot-api-notice" role="tabpanel" aria-labelledby="chatbotApiTab" tabindex="0" hidden>
-          <h2>API 연결 지시문을 준비 중이에요.</h2>
-          <p>먼저 ‘챗봇 만들기’ 단계로 대화 화면을 완성해 주세요.</p>
+        <section id="chatbotApiPanel" role="tabpanel" aria-labelledby="chatbotApiTab" hidden>
+          <div class="result-top">
+            <div>
+              <h2>API 연결하기 지시문</h2>
+              <p>‘챗봇 만들기’를 마친 뒤, 아래 내용을 복사해 같은 작업 대화에 이어서 붙여넣으세요.</p>
+            </div>
+            <div class="result-actions">
+              <button type="button" class="btn btn-copy" id="chatbotApiCopyButton">지시문 복사하기</button>
+            </div>
+          </div>
+          <div class="output-wrap">
+            <div class="output-meta"><span id="chatbotApiCharacterCount">0자</span></div>
+            <pre id="chatbotApiPromptOutput" class="prompt-output" tabindex="0" aria-label="API 연결 지시문"></pre>
+            <div class="result-bottom-actions">
+              <button type="button" class="btn btn-copy" id="chatbotApiCopyButtonBottom">지시문 복사하기</button>
+            </div>
+          </div>
         </section>
       </div>
     </section>
@@ -1015,6 +1024,7 @@
       const chatbotPassword = document.getElementById("chatbotPassword");
       const chatbotGateError = document.getElementById("chatbotGateError");
       const chatbotOutput = document.getElementById("chatbotPromptOutput");
+      const chatbotApiOutput = document.getElementById("chatbotApiPromptOutput");
       const chatbotStepTabs = Array.from(document.querySelectorAll(".chatbot-step"));
       const modeTabs = Array.from(document.querySelectorAll(".mode-tab"));
       let chatbotUnlocked = false;
@@ -1046,6 +1056,229 @@
 
 입력과 답변은 HTML로 실행하지 말고 텍스트로 표시해줘.
 대화는 페이지 메모리에 보관하고 초기화하면 지워줘.`;
+
+      const API_CONNECTION_PROMPT = `현재 index.html의 플로팅 챗봇을
+Node.js 서버와 OpenAI Responses API에 연결해줘.
+
+고등학생 수업용이므로 학생이 명령어를 직접 입력하지 않아도
+‘파일 더블클릭 → API 키 붙여넣기 → Enter → 웹페이지 열기’로
+사용할 수 있게 만들어줘.
+
+Windows의 한글 인코딩 오류를 예방하기 위해
+실행 도우미도 Node.js로 작성하고 PowerShell 스크립트는 사용하지 마.
+기존 웹페이지의 기능과 디자인은 유지해줘.
+
+[1. 파일과 설치]
+
+다음 파일을 만들어줘.
+
+- server.mjs: 웹페이지 제공 및 API 처리
+- launcher.mjs: 키 입력 및 서버 실행 도우미
+- package.json: 패키지와 실행 명령
+- SETUP.cmd: 필요한 패키지 설치
+- START.cmd: 실행 도우미 시작
+- team-profile.md: 팀 자료
+- chatbot-rules.md: 답변 지침
+
+공식 openai JavaScript SDK를 사용해줘.
+
+package.json의 start 명령은 node server.mjs로 설정해서
+npm.cmd start로도 서버를 실행할 수 있게 해줘.
+
+Node.js는 강사가 수업 전에 설치하는 것으로 가정해줘.
+
+SETUP.cmd를 더블클릭하면 프로젝트 폴더에서
+npm.cmd install을 실행하도록 해줘.
+설치 성공·실패를 구분하고 실패하면 창이 바로 닫히지 않게 해줘.
+
+START.cmd는 Node.js와 필요한 패키지의 준비 여부를 확인해줘.
+준비되지 않았으면 강사에게 도움을 요청하라는 안내를 보여줘.
+설치는 API 키를 입력받기 전에 마쳐야 해.
+
+[2. 학생용 실행 도우미]
+
+START.cmd를 더블클릭하면 launcher.mjs를 실행해줘.
+
+launcher.mjs는 다음 순서로 동작하게 해줘.
+
+1. 한글로 간단한 사용 안내 표시
+2. API 키를 마스킹된 입력으로 받기
+3. Enter를 누르면 서버 시작
+4. 서버가 정상적으로 시작된 뒤
+   http://127.0.0.1:3000을 기본 브라우저로 열기
+5. 실행 상태와 종료 방법 표시
+
+키를 입력하면:
+
+- 현재 Node.js 프로세스의 OPENAI_API_KEY에 설정
+- CHAT_MODE를 live로 설정
+
+키를 입력하지 않고 Enter를 누르면:
+
+- CHAT_MODE를 mock으로 설정
+- 상속받은 OPENAI_API_KEY가 있더라도 사용하지 않도록 제거
+- 연습 모드임을 명확히 표시
+
+키 입력은 글자가 화면에 노출되지 않게 구현해줘.
+붙여넣기, Backspace, Enter, Ctrl+C를 정상 처리해줘.
+안전하게 마스킹할 수 없는 입력 환경이면 실행을 중단해줘.
+입력 완료·취소·오류 시 터미널 입력 상태를 복원해줘.
+
+환경변수를 설정한 뒤 server.mjs의 startServer()를 호출해서
+실행 도우미와 서버가 같은 Node.js 프로세스에서 실행되게 해줘.
+
+server.mjs는:
+
+- 직접 실행하면 서버를 시작
+- import하면 자동으로 시작하지 않고 startServer()를 제공
+
+Ctrl+C로 종료하면 HTTP 서버도 정리하고 프로세스를 종료해줘.
+종료 후 서버가 별도 백그라운드 프로세스로 남지 않게 해줘.
+
+3000번 포트가 사용 중이면 안내하고 종료해줘.
+다른 프로그램을 임의로 종료하거나,
+기존 서버를 내가 시작한 서버로 오인하지 마.
+
+[3. Windows 인코딩과 경로 처리]
+
+START.cmd와 SETUP.cmd는:
+
+- 파일 내용에 ASCII 문자만 사용
+- BOM 없이 저장
+- Windows CRLF 줄바꿈 사용
+- 필요한 경우 chcp 65001로 콘솔 코드 페이지 설정
+- 한글 안내와 복잡한 프로그램 로직은 넣지 않기
+
+한글 안내는 launcher.mjs에서 처리해줘.
+
+.mjs, .json, .md, .html은 올바른 UTF-8로 저장해줘.
+HTML의 charset과 서버의 텍스트 응답 charset도 UTF-8로 맞춰줘.
+
+파일을 읽는 인코딩과 콘솔에 출력하는 인코딩을 구분해서 처리해줘.
+chcp 65001만 추가하고 해결됐다고 판단하지 마.
+
+프로젝트 폴더 경로에 한글과 공백이 있어도 동작하게 해줘.
+실행한 위치와 관계없이 실제 프로젝트 폴더를 기준으로
+서버 파일, HTML, 팀 자료를 찾아야 해.
+
+긴 코드를 .cmd 안에 문자열로 삽입하지 말고,
+별도 launcher.mjs 파일을 실행해줘.
+PowerShell -Command나 .ps1 파일에 의존하지 마.
+
+[4. 서버와 API]
+
+서버는 127.0.0.1의 3000번 포트에서 실행해줘.
+
+GET /:
+
+- 기존 index.html 제공
+- 필요한 공개 파일만 명시적으로 제공
+- 프로젝트 폴더 전체를 공개하지 않기
+- 서버 코드, 설정 파일, 팀 자료, node_modules는 공개하지 않기
+
+GET /api/health:
+
+- 서버 상태, 실행 모드, 키 입력 여부만 반환
+- 키 값이나 일부 문자열은 절대 반환하지 않기
+- 키 입력 여부와 실제 키의 유효성 검증을 구분하기
+
+POST /api/chat:
+
+- 다음 형식으로 입력받기
+  { messages: [{ role: "user", content: "질문" }] }
+
+- 다음 형식으로 반환하기
+  { reply: "답변", mode: "mock" 또는 "live" }
+
+입력 형식을 검증하고,
+메시지 role은 user와 assistant만 허용해줘.
+사용자 질문이 1000자를 초과하면 알아보기 쉬운 오류를 반환해줘.
+요청 본문 크기에도 제한을 두고,
+OpenAI에는 최근 8개 메시지까지만 전달해줘.
+
+[5. 실행 모드와 OpenAI 연결]
+
+CHAT_MODE가 정확히 live일 때만 OpenAI를 호출해줘.
+그 외의 기본 동작은 mock으로 해줘.
+
+mock에서는:
+
+- ‘로컬 서버의 연습 응답입니다.’ 반환
+- OpenAI 클라이언트 초기화 금지
+- 외부 API 호출 금지
+
+live에서는:
+
+- process.env.OPENAI_API_KEY에서 키 읽기
+- 실제 요청을 처리할 때 OpenAI 클라이언트 사용
+- Responses API 사용
+- 모델은 OPENAI_MODEL 환경변수에서 읽기
+- 모델 기본값은 gpt-4.1-mini
+- max_output_tokens는 600
+- store는 false
+- 답변은 response.output_text에서 가져오기
+
+키가 없어도 서버는 실행되게 해줘.
+live 요청에 키가 없으면 설정 오류를 반환해줘.
+API 실패를 mock 응답으로 숨기지 마.
+
+[6. 팀 자료]
+
+team-profile.md와 chatbot-rules.md에는
+이번 단계에서 ‘팀 자료 준비 중’이라는 최소 내용만 넣어줘.
+
+live 요청마다 두 파일을 UTF-8로 읽고,
+team-profile.md는 참고자료,
+chatbot-rules.md는 답변 지침으로 전달해줘.
+
+파일을 읽지 못하면 알아보기 쉬운 오류를 반환해줘.
+
+[7. 화면과 키 보호]
+
+askBot(messages)는 fetch('/api/chat')를 호출하도록 바꿔줘.
+응답 대기, 중복 전송 방지, 실패 안내, 재시도를 구현해줘.
+사용자 입력과 답변은 HTML로 실행하지 말고 텍스트로 표시해줘.
+현재 mock인지 live인지 화면에서 확인할 수 있게 해줘.
+
+API 키는:
+
+- 실행 도우미에서 사용자가 직접 입력
+- 현재 실행 중인 Node.js 프로세스에서만 보관
+- HTML, .env 등 파일에 저장하지 않기
+- Windows 사용자·시스템 환경변수에 영구 저장하지 않기
+- 명령줄 인자나 URL에 넣지 않기
+- 브라우저를 여는 자식 프로세스에 전달하지 않기
+- AI 채팅으로 요청하지 않기
+
+키, Authorization 헤더, 환경변수 전체,
+오류 객체 전체를 출력하지 마.
+
+로그에는 성공 여부, 처리 시간,
+안전하게 분류한 오류 종류만 표시해줘.
+
+[8. 완료 전 검증]
+
+실제 API 키나 유료 API 호출 없이 다음을 검증해줘.
+
+- SETUP.cmd와 START.cmd의 내용이 ASCII이고 BOM이 없는지
+- 한글이 들어간 소스 파일이 올바른 UTF-8인지
+- 한글·공백이 있는 경로에서 파일을 정상적으로 찾는지
+- Windows의 실제 START.cmd 실행 경로에서 한글이 정상 표시되는지
+- 테스트 문자열을 입력해도 화면에 원문이 노출되지 않는지
+- 키 없이 연습 모드로 서버와 웹페이지가 실행되는지
+- mock에서 OpenAI 클라이언트 초기화와 외부 요청이 없는지
+- 준비 완료 후 브라우저가 열리는지
+- 포트 충돌 시 다른 프로그램을 건드리지 않는지
+- 종료하면 서버도 함께 종료되는지
+
+검증한 항목과 확인하지 못한 항목을 구분해서 알려줘.
+실제 API 연결을 확인하지 않았다면 성공했다고 표현하지 마.
+
+마지막 학생용 안내는 다음 세 줄로 간단히 정리해줘.
+
+1. 최초 준비: SETUP.cmd 더블클릭
+2. 챗봇 실행: START.cmd 더블클릭 후 키 붙여넣기
+3. 종료: 실행 창에서 Ctrl+C`;
 
       totalCount.textContent = String(fields.length);
       editTotalCount.textContent = String(editFields.length);
@@ -1529,6 +1762,8 @@ ${v.coreFeature}
         chatbotGateError.textContent = "";
         chatbotOutput.textContent = CHATBOT_PROMPT;
         document.getElementById("chatbotCharacterCount").textContent = `${CHATBOT_PROMPT.length.toLocaleString("ko-KR")}자`;
+        chatbotApiOutput.textContent = API_CONNECTION_PROMPT;
+        document.getElementById("chatbotApiCharacterCount").textContent = `${API_CONNECTION_PROMPT.length.toLocaleString("ko-KR")}자`;
         chatbotGate.hidden = true;
         chatbotContent.hidden = false;
         selectChatbotStep("build");
@@ -1547,6 +1782,8 @@ ${v.coreFeature}
         chatbotGate.hidden = false;
         chatbotOutput.textContent = "";
         document.getElementById("chatbotCharacterCount").textContent = "0자";
+        chatbotApiOutput.textContent = "";
+        document.getElementById("chatbotApiCharacterCount").textContent = "0자";
         chatbotPassword.value = "";
         chatbotPassword.removeAttribute("aria-invalid");
         chatbotGateError.hidden = true;
@@ -1559,6 +1796,14 @@ ${v.coreFeature}
         button.addEventListener("click", () => {
           if (!chatbotUnlocked) return;
           copyFrom(chatbotOutput, button, "지시문 복사하기", "챗봇 추가 지시문을 복사했습니다.");
+        });
+      });
+
+      ["chatbotApiCopyButton", "chatbotApiCopyButtonBottom"].forEach((id) => {
+        const button = document.getElementById(id);
+        button.addEventListener("click", () => {
+          if (!chatbotUnlocked) return;
+          copyFrom(chatbotApiOutput, button, "지시문 복사하기", "API 연결 지시문을 복사했습니다.");
         });
       });
 
