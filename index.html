@@ -459,6 +459,16 @@
     .gate-form .btn { width: 100%; margin-top: 16px; }
     .gate-error { margin: 10px 0 0; color: #aa3040; font-size: 14px; }
     #chatbotPromptOutput { min-height: 0; }
+    .chatbot-toolbar { display: flex; align-items: center; gap: 20px; padding: 22px 34px; border-bottom: 1px solid var(--line); }
+    .chatbot-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; flex: 1; max-width: 540px; padding: 6px; border-radius: 16px; background: #edf2f8; }
+    .chatbot-step { display: flex; align-items: center; justify-content: center; gap: 9px; min-height: 48px; padding: 10px 12px; border: 0; border-radius: 11px; color: var(--muted); background: transparent; font: inherit; font-weight: 800; cursor: pointer; word-break: keep-all; }
+    .chatbot-step[aria-selected="true"] { color: var(--navy); background: white; box-shadow: 0 3px 10px rgba(32, 41, 95, 0.1); }
+    .chatbot-step-number { display: grid; place-items: center; flex: 0 0 24px; height: 24px; border-radius: 8px; background: #e1e7f0; font-size: 12px; }
+    .chatbot-step[aria-selected="true"] .chatbot-step-number { background: var(--yellow); }
+    .chatbot-toolbar > .btn { margin-left: auto; }
+    .chatbot-api-notice { padding: 52px 34px; text-align: center; }
+    .chatbot-api-notice h2 { margin: 0; color: var(--navy); font-size: 25px; }
+    .chatbot-api-notice p { margin: 12px 0 0; color: var(--muted); }
 
     .result-top {
       display: flex;
@@ -572,6 +582,12 @@
       .mode-copy small { display: none; }
       .chatbot-gate { padding: 32px 22px; }
       .chatbot-gate h2 { font-size: 23px; }
+      .chatbot-toolbar { flex-wrap: wrap; gap: 12px; padding: 18px; }
+      .chatbot-tabs { flex-basis: 100%; }
+      .chatbot-step { padding: 10px 6px; gap: 6px; font-size: 14px; }
+      .chatbot-toolbar > .btn { width: auto; min-height: 42px; }
+      .chatbot-api-notice { padding: 36px 22px; }
+      .chatbot-api-notice h2 { font-size: 22px; }
       .panel { border-radius: 20px; }
       .intro-strip { align-items: flex-start; padding: 19px; }
       .intro-strip strong { font-size: 16px; }
@@ -931,13 +947,24 @@
       </div>
 
       <div id="chatbotContent" hidden>
+        <div class="chatbot-toolbar">
+          <nav class="chatbot-tabs" role="tablist" aria-label="챗봇 제작 단계">
+            <button type="button" class="chatbot-step" id="chatbotBuildTab" role="tab" aria-selected="true" aria-controls="chatbotBuildPanel" tabindex="0" data-chatbot-step="build">
+              <span class="chatbot-step-number" aria-hidden="true">1</span>챗봇 만들기
+            </button>
+            <button type="button" class="chatbot-step" id="chatbotApiTab" role="tab" aria-selected="false" aria-controls="chatbotApiPanel" tabindex="-1" data-chatbot-step="api">
+              <span class="chatbot-step-number" aria-hidden="true">2</span>API 연결하기
+            </button>
+          </nav>
+          <button type="button" class="btn btn-secondary" id="chatbotLockButton">다시 잠그기</button>
+        </div>
+        <section id="chatbotBuildPanel" role="tabpanel" aria-labelledby="chatbotBuildTab">
         <div class="result-top">
           <div>
-            <h2>챗봇 추가 지시문</h2>
+            <h2>챗봇 만들기 지시문</h2>
             <p>아래 내용을 복사해 기존 웹앱을 만든 작업 대화에 이어서 붙여넣으세요.</p>
           </div>
           <div class="result-actions">
-            <button type="button" class="btn btn-secondary" id="chatbotLockButton">다시 잠그기</button>
             <button type="button" class="btn btn-copy" id="chatbotCopyButton">지시문 복사하기</button>
           </div>
         </div>
@@ -948,6 +975,11 @@
             <button type="button" class="btn btn-copy" id="chatbotCopyButtonBottom">지시문 복사하기</button>
           </div>
         </div>
+        </section>
+        <section id="chatbotApiPanel" class="chatbot-api-notice" role="tabpanel" aria-labelledby="chatbotApiTab" tabindex="0" hidden>
+          <h2>API 연결 지시문을 준비 중이에요.</h2>
+          <p>먼저 ‘챗봇 만들기’ 단계로 대화 화면을 완성해 주세요.</p>
+        </section>
       </div>
     </section>
   </main>
@@ -982,6 +1014,7 @@
       const chatbotPassword = document.getElementById("chatbotPassword");
       const chatbotGateError = document.getElementById("chatbotGateError");
       const chatbotOutput = document.getElementById("chatbotPromptOutput");
+      const chatbotStepTabs = Array.from(document.querySelectorAll(".chatbot-step"));
       const modeTabs = Array.from(document.querySelectorAll(".mode-tab"));
       let chatbotUnlocked = false;
       let toastTimer;
@@ -1025,6 +1058,16 @@
         const count = editFields.filter((field) => field.value.trim().length > 0).length;
         editFilledCount.textContent = String(count);
         if (count > 0) document.getElementById("editFormMessage").hidden = true;
+      }
+
+      function selectChatbotStep(step) {
+        if (step !== "api") step = "build";
+        chatbotStepTabs.forEach((tab) => {
+          const active = tab.dataset.chatbotStep === step;
+          tab.setAttribute("aria-selected", String(active));
+          tab.tabIndex = active ? 0 : -1;
+          document.getElementById(tab.getAttribute("aria-controls")).hidden = !active;
+        });
       }
 
       function selectMode(mode, updateUrl = true) {
@@ -1487,6 +1530,7 @@ ${v.coreFeature}
         document.getElementById("chatbotCharacterCount").textContent = `${CHATBOT_PROMPT.length.toLocaleString("ko-KR")}자`;
         chatbotGate.hidden = true;
         chatbotContent.hidden = false;
+        selectChatbotStep("build");
         document.getElementById("chatbotCopyButton").focus();
       });
 
@@ -1498,6 +1542,7 @@ ${v.coreFeature}
       document.getElementById("chatbotLockButton").addEventListener("click", () => {
         chatbotUnlocked = false;
         chatbotContent.hidden = true;
+        selectChatbotStep("build");
         chatbotGate.hidden = false;
         chatbotOutput.textContent = "";
         document.getElementById("chatbotCharacterCount").textContent = "0자";
@@ -1558,6 +1603,22 @@ ${v.coreFeature}
             field.style.height = "auto";
             field.style.height = `${Math.min(field.scrollHeight, 260)}px`;
           }
+        });
+      });
+
+      chatbotStepTabs.forEach((tab, index) => {
+        tab.addEventListener("click", () => selectChatbotStep(tab.dataset.chatbotStep));
+        tab.addEventListener("keydown", (event) => {
+          if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+          event.preventDefault();
+          let nextIndex = index;
+          if (event.key === "ArrowLeft") nextIndex = (index - 1 + chatbotStepTabs.length) % chatbotStepTabs.length;
+          if (event.key === "ArrowRight") nextIndex = (index + 1) % chatbotStepTabs.length;
+          if (event.key === "Home") nextIndex = 0;
+          if (event.key === "End") nextIndex = chatbotStepTabs.length - 1;
+          const nextTab = chatbotStepTabs[nextIndex];
+          selectChatbotStep(nextTab.dataset.chatbotStep);
+          nextTab.focus();
         });
       });
 
