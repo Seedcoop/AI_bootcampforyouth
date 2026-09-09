@@ -193,7 +193,7 @@
 
     .mode-switcher {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 8px;
       margin-bottom: 24px;
       padding: 8px;
@@ -450,6 +450,16 @@
 
     .result-panel { padding-bottom: 0; }
 
+    .chatbot-gate { max-width: 530px; margin: 0 auto; padding: 46px 30px; text-align: center; }
+    .gate-icon { display: grid; place-items: center; width: 64px; height: 64px; margin: 0 auto 18px; border-radius: 20px; color: var(--navy); background: #fff0bb; }
+    .chatbot-gate h2 { margin: 0; color: var(--navy); font-size: 27px; line-height: 1.35; letter-spacing: -0.04em; }
+    .chatbot-gate > p { margin: 12px 0 26px; color: var(--muted); font-size: 15px; }
+    .gate-form { text-align: left; }
+    .gate-form input { min-height: 54px; }
+    .gate-form .btn { width: 100%; margin-top: 16px; }
+    .gate-error { margin: 10px 0 0; color: #aa3040; font-size: 14px; }
+    #chatbotPromptOutput { min-height: 0; }
+
     .result-top {
       display: flex;
       align-items: flex-start;
@@ -531,6 +541,11 @@
     }
 
     @media (max-width: 900px) {
+      .mode-tab { flex-direction: column; min-height: 104px; gap: 7px; padding: 12px 8px; text-align: center; }
+      .mode-index { flex-basis: 28px; width: 28px; height: 28px; border-radius: 9px; font-size: 11px; }
+      .mode-copy { width: 100%; }
+      .mode-copy strong { display: grid; align-content: center; min-height: 2.7em; font-size: 16px; line-height: 1.35; white-space: normal; overflow: visible; text-overflow: clip; }
+      .mode-copy small { display: none; }
       .hero { min-height: 320px; }
       .pencil { right: -28px; opacity: 0.72; }
       .magnifier { right: 7%; opacity: 0.55; }
@@ -550,10 +565,13 @@
       .magnifier { right: 7%; bottom: 30px; transform: rotate(-28deg) scale(0.72); }
       main { width: calc(100% - 20px); margin-top: -38px; }
       .mode-switcher { gap: 6px; margin-bottom: 16px; padding: 6px; border-radius: 19px; }
-      .mode-tab { min-height: 78px; gap: 8px; padding: 10px 8px; border-radius: 14px; }
-      .mode-index { flex-basis: 31px; width: 31px; height: 31px; border-radius: 10px; font-size: 11px; }
-      .mode-copy strong { font-size: 14px; }
-      .mode-copy small { font-size: 11px; }
+      .mode-tab { flex-direction: column; min-height: 100px; gap: 7px; padding: 10px 6px; border-radius: 14px; text-align: center; }
+      .mode-index { flex-basis: 28px; width: 28px; height: 28px; border-radius: 9px; font-size: 11px; }
+      .mode-copy { width: 100%; }
+      .mode-copy strong { display: grid; align-content: center; min-height: 2.7em; font-size: clamp(12px, 3.3vw, 14px); line-height: 1.35; white-space: normal; overflow: visible; text-overflow: clip; }
+      .mode-copy small { display: none; }
+      .chatbot-gate { padding: 32px 22px; }
+      .chatbot-gate h2 { font-size: 23px; }
       .panel { border-radius: 20px; }
       .intro-strip { align-items: flex-start; padding: 19px; }
       .intro-strip strong { font-size: 16px; }
@@ -572,11 +590,6 @@
       .prompt-output { min-height: 62vh; padding: 17px; font-size: 13px; }
       .output-meta { flex-direction: column; gap: 2px; }
       .result-bottom-actions .btn { width: 100%; }
-    }
-
-    @media (max-width: 420px) {
-      .mode-tab { min-height: 62px; }
-      .mode-copy small { display: none; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -610,6 +623,13 @@
         <span class="mode-copy">
           <strong>기존 웹앱 수정하기</strong>
           <small>바꿀 내용과 검증 기준 정리</small>
+        </span>
+      </button>
+      <button type="button" class="mode-tab" id="chatbotModeTab" role="tab" aria-selected="false" aria-controls="chatbotView" tabindex="-1" data-mode="chatbot">
+        <span class="mode-index" aria-hidden="true">03</span>
+        <span class="mode-copy">
+          <strong>챗봇 추가하기</strong>
+          <small>대화형 기능의 첫 단계</small>
         </span>
       </button>
     </nav>
@@ -892,6 +912,44 @@
         </div>
       </div>
     </section>
+    <section id="chatbotView" class="panel" role="tabpanel" aria-labelledby="chatbotModeTab" hidden>
+      <div id="chatbotGate" class="chatbot-gate">
+        <div class="gate-icon" aria-hidden="true">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="10" width="16" height="11" rx="3"></rect>
+            <path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"></path>
+          </svg>
+        </div>
+        <h2>챗봇 만들기를 시작해 볼까요?</h2>
+        <p>강사가 안내한 암호를 입력하면<br>챗봇 추가 지시문을 열 수 있어요.</p>
+        <form id="chatbotUnlockForm" class="gate-form" novalidate>
+          <label class="question" for="chatbotPassword">수업 암호</label>
+          <input id="chatbotPassword" name="lessonCode" type="password" placeholder="암호를 입력해 주세요." autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="chatbotGateError">
+          <p id="chatbotGateError" class="gate-error" role="status" hidden></p>
+          <button type="submit" class="btn btn-primary">지시문 열기 →</button>
+        </form>
+      </div>
+
+      <div id="chatbotContent" hidden>
+        <div class="result-top">
+          <div>
+            <h2>챗봇 추가 지시문</h2>
+            <p>아래 내용을 복사해 기존 웹앱을 만든 작업 대화에 이어서 붙여넣으세요.</p>
+          </div>
+          <div class="result-actions">
+            <button type="button" class="btn btn-secondary" id="chatbotLockButton">다시 잠그기</button>
+            <button type="button" class="btn btn-copy" id="chatbotCopyButton">지시문 복사하기</button>
+          </div>
+        </div>
+        <div class="output-wrap">
+          <div class="output-meta"><span id="chatbotCharacterCount">0자</span></div>
+          <pre id="chatbotPromptOutput" class="prompt-output" tabindex="0" aria-label="챗봇 추가 지시문"></pre>
+          <div class="result-bottom-actions">
+            <button type="button" class="btn btn-copy" id="chatbotCopyButtonBottom">지시문 복사하기</button>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <div id="copyToast" class="copy-toast" role="status" aria-live="polite">복사했습니다. Codex에 붙여넣어 주세요.</div>
@@ -918,8 +976,42 @@
       const editTotalCount = document.getElementById("editTotalCount");
       const editCharacterCount = document.getElementById("editCharacterCount");
       const editFields = Array.from(editForm.querySelectorAll("input, textarea"));
+      const chatbotView = document.getElementById("chatbotView");
+      const chatbotGate = document.getElementById("chatbotGate");
+      const chatbotContent = document.getElementById("chatbotContent");
+      const chatbotPassword = document.getElementById("chatbotPassword");
+      const chatbotGateError = document.getElementById("chatbotGateError");
+      const chatbotOutput = document.getElementById("chatbotPromptOutput");
       const modeTabs = Array.from(document.querySelectorAll(".mode-tab"));
+      let chatbotUnlocked = false;
       let toastTimer;
+
+      const CHATBOT_PROMPT = `현재 폴더의 index.html에 플로팅 챗봇을 추가해줘.
+
+기존 홈페이지의 기능과 디자인을 유지하면서 다음을 구현해줘.
+
+- 오른쪽 아래 챗봇 버튼
+- 대화창 열기와 닫기
+- 질문 입력칸과 전송 버튼
+- 질문·답변 말풍선
+- 추천 질문 3개
+- 대화 초기화
+- 응답 대기 표시와 중복 전송 방지
+- 오류 안내와 재시도
+- 모바일 화면 대응
+
+아직 외부 API는 호출하지 마.
+질문을 보내면
+“화면 연습용 응답입니다. 다음 단계에서 AI를 연결합니다.”
+라는 문장을 보여줘.
+
+화면에 ‘화면 연습 모드’를 표시해줘.
+
+답변을 가져오는 함수는 async askBot(messages)로 분리하고,
+{ reply: 답변문자열, mode: 'mock' }을 반환하도록 해줘.
+
+입력과 답변은 HTML로 실행하지 말고 텍스트로 표시해줘.
+대화는 페이지 메모리에 보관하고 초기화하면 지워줘.`;
 
       totalCount.textContent = String(fields.length);
       editTotalCount.textContent = String(editFields.length);
@@ -936,27 +1028,32 @@
       }
 
       function selectMode(mode, updateUrl = true) {
-        const isEdit = mode === "edit";
-        formView.hidden = isEdit;
+        if (!["create", "edit", "chatbot"].includes(mode)) mode = "create";
+        formView.hidden = mode !== "create";
         resultView.hidden = true;
-        editFormView.hidden = !isEdit;
+        editFormView.hidden = mode !== "edit";
         editResultView.hidden = true;
+        chatbotView.hidden = mode !== "chatbot";
+        const panelIds = { create: "formView", edit: "editFormView", chatbot: "chatbotView" };
 
         modeTabs.forEach((tab) => {
           const active = tab.dataset.mode === mode;
           tab.classList.toggle("is-active", active);
           tab.setAttribute("aria-selected", String(active));
-          tab.setAttribute("aria-controls", tab.dataset.mode === "edit" ? "editFormView" : "formView");
+          tab.setAttribute("aria-controls", panelIds[tab.dataset.mode]);
           tab.tabIndex = active ? 0 : -1;
         });
 
-        document.title = isEdit
-          ? "기존 웹앱 수정하기 | AI시대 청소년 창업가정신 부트캠프"
-          : "AI시대 청소년 창업가정신 부트캠프 바이브코딩 프로토타이핑 도구";
+        const titles = {
+          create: "AI시대 청소년 창업가정신 부트캠프 바이브코딩 프로토타이핑 도구",
+          edit: "기존 웹앱 수정하기 | AI시대 청소년 창업가정신 부트캠프",
+          chatbot: "챗봇 추가하기 | AI시대 청소년 창업가정신 부트캠프"
+        };
+        document.title = titles[mode];
 
         if (updateUrl) {
           const url = new URL(window.location.href);
-          url.hash = isEdit ? "edit" : "create";
+          url.hash = mode;
           window.history.replaceState(null, "", url);
         }
       }
@@ -1370,6 +1467,55 @@ ${v.coreFeature}
       document.getElementById("copyButton").addEventListener("click", copyText);
       document.getElementById("editCopyButton").addEventListener("click", copyEditText);
 
+      document.getElementById("chatbotUnlockForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+        if (chatbotPassword.value.trim() !== "CON") {
+          chatbotGateError.textContent = chatbotPassword.value.trim()
+            ? "암호가 맞지 않아요. 다시 확인해 주세요."
+            : "강사가 안내한 암호를 입력해 주세요.";
+          chatbotGateError.hidden = false;
+          chatbotPassword.setAttribute("aria-invalid", "true");
+          chatbotPassword.focus();
+          return;
+        }
+        chatbotUnlocked = true;
+        chatbotPassword.value = "";
+        chatbotPassword.removeAttribute("aria-invalid");
+        chatbotGateError.hidden = true;
+        chatbotGateError.textContent = "";
+        chatbotOutput.textContent = CHATBOT_PROMPT;
+        document.getElementById("chatbotCharacterCount").textContent = `${CHATBOT_PROMPT.length.toLocaleString("ko-KR")}자`;
+        chatbotGate.hidden = true;
+        chatbotContent.hidden = false;
+        document.getElementById("chatbotCopyButton").focus();
+      });
+
+      chatbotPassword.addEventListener("input", () => {
+        chatbotGateError.hidden = true;
+        chatbotPassword.removeAttribute("aria-invalid");
+      });
+
+      document.getElementById("chatbotLockButton").addEventListener("click", () => {
+        chatbotUnlocked = false;
+        chatbotContent.hidden = true;
+        chatbotGate.hidden = false;
+        chatbotOutput.textContent = "";
+        document.getElementById("chatbotCharacterCount").textContent = "0자";
+        chatbotPassword.value = "";
+        chatbotPassword.removeAttribute("aria-invalid");
+        chatbotGateError.hidden = true;
+        chatbotGateError.textContent = "";
+        chatbotPassword.focus();
+      });
+
+      ["chatbotCopyButton", "chatbotCopyButtonBottom"].forEach((id) => {
+        const button = document.getElementById(id);
+        button.addEventListener("click", () => {
+          if (!chatbotUnlocked) return;
+          copyFrom(chatbotOutput, button, "지시문 복사하기", "챗봇 추가 지시문을 복사했습니다.");
+        });
+      });
+
       document.getElementById("resetButton").addEventListener("click", () => {
         const hasInput = fields.some((field) => field.value.trim());
         if (!hasInput || window.confirm("작성한 내용을 모두 지울까요?")) {
@@ -1436,12 +1582,12 @@ ${v.coreFeature}
       });
 
       window.addEventListener("hashchange", () => {
-        selectMode(window.location.hash === "#edit" ? "edit" : "create", false);
+        selectMode(window.location.hash.slice(1), false);
       });
 
       updateProgress();
       updateEditProgress();
-      selectMode(window.location.hash === "#edit" ? "edit" : "create", false);
+      selectMode(window.location.hash.slice(1), false);
     })();
   </script>
 </body>
