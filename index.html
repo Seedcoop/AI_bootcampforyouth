@@ -933,7 +933,7 @@
           </svg>
         </div>
         <h2>챗봇 만들기를 시작해 볼까요?</h2>
-        <p>강사가 안내한 암호를 입력하면<br>챗봇 추가 지시문을 열 수 있어요.</p>
+        <p>진행자가 안내한 암호를 입력하면<br>챗봇 추가 지시문을 열 수 있어요.</p>
         <form id="chatbotUnlockForm" class="gate-form" novalidate>
           <label class="question" for="chatbotPassword">수업 암호</label>
           <input id="chatbotPassword" name="lessonCode" type="password" placeholder="암호를 입력해 주세요." autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="chatbotGateError">
@@ -1759,7 +1759,7 @@ ${v.coreFeature}
         if (chatbotPassword.value.trim() !== "CON") {
           chatbotGateError.textContent = chatbotPassword.value.trim()
             ? "암호가 맞지 않아요. 다시 확인해 주세요."
-            : "강사가 안내한 암호를 입력해 주세요.";
+            : "진행자가 안내한 암호를 입력해 주세요.";
           chatbotGateError.hidden = false;
           chatbotPassword.setAttribute("aria-invalid", "true");
           chatbotPassword.focus();
